@@ -1,44 +1,35 @@
 pipeline {
     agent any
-    
     stages {
-        stage('Clone Git repo') {
+        stage('Install and configure Puppet agent') {
             steps {
-                git branch: 'master', url: 'https://github.com/shivgana/projCert.git'
+                // run shell commands to install and configure Puppet agent on the slave node
+                sh 'sudo apt-get update'
+                sh 'sudo apt-get install puppet-agent'
+                sh 'sudo puppet config set server <puppet_master_hostname_or_IP>'
+                sh 'sudo puppet agent -t'
             }
         }
-        stage('Install and configure puppet agent on the slave node') {
+        stage('Push Ansible configuration to install Docker') {
             steps {
-                // code for Job 1
+                // run Ansible playbook to install Docker on test server
+                ansiblePlaybook playbook: 'setup_docker.yaml'
             }
         }
-        
-        stage('Push Ansible configuration to install docker on test server') {
-            steps {
-                sh 'ansible-playbook setup_docker.yaml'
-            }
-        }
-        
         stage('Build and deploy PHP Docker container') {
-            agent slave
             steps {
-                sh 'docker build -t docshiva/eduphpproj .'
-                sh 'docker run -d php-app docshiva/eduphpproj'
+                // clone git repo containing PHP website and Dockerfile
+                git url: 'https://github.com/shivgana/projCert.git'
+                // build and tag Docker container
+                sh 'docker build -t eduphpproj .'
+                // run Docker container
+                sh 'docker run -d -p 80:80 eduphpproj'
             }
-        }
-        
-        stage('Push Docker image') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKERHUB_PASSWORD', usernameVariable: 'DOCKERHUB_USERNAME')]) {
-                    sh 'docker login -u $DOCKERHUB_USERNAME -p $DOCKERHUB_PASSWORD'
-                    sh 'docker push docshiva/eduphpproj:latest'
+            post {
+                failure {
+                    // if previous stage fails, delete running container on test server
+                    sh 'docker rm -f $(docker ps -aq)'
                 }
-            }
-        }
-        
-        stage('Delete running container on Test Server if Job 3 fails') {
-            steps {
-                // code for Job 4
             }
         }
     }
