@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        SSH-PASS  = credentials('slavepasswd')
+        SLAVEPASS  = credentials('slavepasswd')
     }
     stages {
         stage('Install and configure Puppet agent') {
