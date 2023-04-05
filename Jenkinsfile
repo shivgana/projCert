@@ -1,16 +1,13 @@
 pipeline {
     agent any
-    environment {
-        SLAVEPASS  = credentials('slavepasswd')
-    }
     stages {
         stage('Install and configure Puppet agent') {
             steps {
                 // run shell commands to install and configure Puppet agent on the slave node
-                sh 'echo $SLAVEPASS | sudo -S apt-get update -y '
-                sh 'echo $SLAVEPASS | sudo -S apt-get install -y puppet-agent'
-                sh 'echo $SLAVEPASS | sudo -S puppet config set server <puppet_master_hostname_or_IP>'
-                sh 'echo $SLAVEPASS | sudo -S puppet agent -t'
+                sh 'sudo apt-get update -y '
+                sh 'sudo apt-get install -y puppet-agent'
+                sh 'sudo puppet config set server 192.168.251.1'
+                sh 'sudo puppet agent -t'
             }
         }
         stage('Push Ansible configuration to install Docker') {
