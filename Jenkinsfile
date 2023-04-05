@@ -8,8 +8,8 @@ pipeline {
                 sh 'sudo dpkg -i puppet6-release-focal.deb'
                 sh 'sudo apt-get update -y '
                 sh 'sudo apt-get install -y puppet-agent'
-                sh 'sudo puppet config set server 192.168.251.1'
-                sh 'sudo puppet agent -t'
+                sh 'puppet config set server 192.168.251.1'
+                sh 'puppet agent -t'
             }
         }
         stage('Push Ansible configuration to install Docker') {
